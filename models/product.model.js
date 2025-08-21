@@ -26,29 +26,58 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
     },
-    inStock: {
-      type: Boolean,
-    },
-    sizes: { type: Array, required: true },
 
-    quantity: { type: Number, required: true },
+    inStock: { type: Boolean },
+
+    newArrival: { type: Boolean, default: true },
+
+    info: [
+      {
+        size: String,
+        quantity: Number,
+        inStock: {
+          type: Boolean,
+          default: function () {
+            return this.quantity > 0;
+          },
+        },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
+// For save
 productSchema.pre("save", function (next) {
-  this.inStock = this.quantity > 0;
+  if (this.info && Array.isArray(this.info)) {
+    this.info.forEach((item) => {
+      item.inStock = item.quantity > 0;
+    });
+    this.inStock = this.info.some((item) => item.inStock);
+  }
   next();
 });
 
-// productSchema.pre("save", function (next) {
-//   // Update status for all items in info array
-//   this.info.forEach((item) => (item.inStock = item.quantity > 0));
-//   this.inStock = this.info.some((item) => item.inStock);
+// For findOneAndUpdate / updateOne / updateMany
+productSchema.pre(
+  ["findOneAndUpdate", "updateOne", "updateMany"],
+  function (next) {
+    const update = this.getUpdate();
 
-//   next();
-// });
+    if (update.info && Array.isArray(update.info)) {
+      update.info = update.info.map((item) => ({
+        ...item,
+        inStock: item.quantity > 0,
+      }));
+
+      update.inStock = update.info.some((item) => item.inStock);
+      this.setUpdate(update);
+    }
+
+    next();
+  }
+);
 
 export const Product = mongoose.model("Product", productSchema);

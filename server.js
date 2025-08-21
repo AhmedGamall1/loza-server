@@ -17,6 +17,7 @@ import { connectToMongoDB } from "./utils/db/connectDB.js";
 import userRoutes from "./routes/user.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 // DEFINING VARIABLES
 const app = express();
@@ -38,6 +39,7 @@ app.use(
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running");
