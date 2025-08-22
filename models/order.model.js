@@ -51,11 +51,6 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    totalQty: {
-      type: Number,
-      required: true,
-    },
-
     paymentMethod: {
       type: {
         type: String,
@@ -68,6 +63,8 @@ const orderSchema = new mongoose.Schema(
         required: true,
       },
     },
+
+    invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
 
     paidAt: {
       type: Date,

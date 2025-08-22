@@ -6,6 +6,7 @@ export const quantityChecker = async (req, res, next) => {
     let insufficientStock = false;
     let unexistProduct = false;
     let checkedProducts = [];
+    let totalPrice = 0; // new
 
     for (const orderedProduct of orderItems) {
       const product = await Product.findById(orderedProduct.id);
@@ -15,8 +16,12 @@ export const quantityChecker = async (req, res, next) => {
         return res.status(400).json({ message: "Product does not exist" });
       }
 
+      let sizeMatched = false;
+
       for (const [index, item] of product.info.entries()) {
         if (item.size === orderedProduct.size) {
+          sizeMatched = true;
+
           if (item.quantity < orderedProduct.quantity) {
             insufficientStock = true;
             return res
@@ -24,10 +29,18 @@ export const quantityChecker = async (req, res, next) => {
               .json({ message: "Not enough product in stock" });
           }
 
+          // reduce stock
           product.info[index].quantity -= orderedProduct.quantity;
+
+          // calc price
+          totalPrice += orderedProduct.quantity * product.price;
 
           checkedProducts.push(product);
         }
+      }
+
+      if (!sizeMatched) {
+        return res.status(400).json({ message: "Selected size not available" });
       }
     }
 
@@ -36,6 +49,7 @@ export const quantityChecker = async (req, res, next) => {
     }
 
     req.products = checkedProducts;
+    req.totalPrice = totalPrice; // attach total price
     next();
   } catch (error) {
     console.log("quantityChecker middleware error:", error.message);
